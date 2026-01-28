@@ -1,0 +1,127 @@
+{
+  "project": "Step 1 Bring-up (Odin + wlroots + small C shim)",
+  "goal": "Start a compositor that can show xdg-shell toplevel windows (nested first), with a frame loop rendering via wlr_scene.",
+  "steps": [
+    {
+      "id": 1,
+      "function": "server_create_display",
+      "description": "Create and return *wl_display (Wayland server instance)."
+    },
+    {
+      "id": 2,
+      "function": "server_create_backend",
+      "description": "Autocreate and return *wlr_backend using the wl_display."
+    },
+    {
+      "id": 3,
+      "function": "server_create_renderer",
+      "description": "Create and return *wlr_renderer compatible with the backend."
+    },
+    {
+      "id": 4,
+      "function": "server_create_allocator",
+      "description": "Create and return *wlr_allocator for buffer allocation."
+    },
+    {
+      "id": 5,
+      "function": "server_create_core_globals",
+      "description": "Create compositor globals clients expect (wlr_compositor, wlr_subcompositor, etc.)."
+    },
+    {
+      "id": 6,
+      "function": "server_create_output_layout",
+      "description": "Create and return *wlr_output_layout to manage output positioning."
+    },
+    {
+      "id": 7,
+      "function": "server_create_scene",
+      "description": "Create and return *wlr_scene (root scene graph)."
+    },
+    {
+      "id": 8,
+      "function": "server_attach_scene_to_layout",
+      "description": "Create and return *wlr_scene_output_layout to connect scene outputs to the output layout."
+    },
+    {
+      "id": 9,
+      "function": "server_create_xdg_shell",
+      "description": "Create and return *wlr_xdg_shell to support xdg-shell clients (normal app windows)."
+    },
+    {
+      "id": 10,
+      "function": "server_create_seat",
+      "description": "Create and return *wlr_seat (input seat), even if full input handling comes later."
+    },
+    {
+      "id": 11,
+      "function": "shim_register_new_output_listener",
+      "description": "C shim: register backend new_output signal and forward events to an Odin callback with (userdata, *wlr_output)."
+    },
+    {
+      "id": 12,
+      "function": "shim_register_new_xdg_surface_listener",
+      "description": "C shim: register xdg_shell new_surface signal and forward events to an Odin callback with (userdata, *wlr_xdg_surface)."
+    },
+    {
+      "id": 13,
+      "function": "output_init",
+      "description": "Handle new output: pick preferred mode, enable+commit, add to output layout, create scene output, then register the frame listener."
+    },
+    {
+      "id": 14,
+      "function": "shim_register_output_frame_listener",
+      "description": "C shim: register output frame signal and forward events to an Odin callback with (userdata, *wlr_output)."
+    },
+    {
+      "id": 15,
+      "function": "output_handle_frame",
+      "description": "Per frame: begin render, clear background, render/commit the wlr_scene for this output, end render + commit."
+    },
+    {
+      "id": 16,
+      "function": "view_init_from_xdg_surface",
+      "description": "On new xdg_surface: if role is toplevel, create a wlr_scene_xdg_surface node attached to the root scene and position it (e.g., 0,0)."
+    },
+    {
+      "id": 17,
+      "function": "server_start_backend",
+      "description": "Start the wlroots backend; return success/failure."
+    },
+    {
+      "id": 18,
+      "function": "server_run",
+      "description": "Enter the Wayland event loop (wl_display_run)."
+    }
+  ],
+  "callbacks_expected": [
+    {
+      "function": "on_new_output",
+      "description": "Odin callback invoked by C shim; calls output_init(server, output)."
+    },
+    {
+      "function": "on_new_xdg_surface",
+      "description": "Odin callback invoked by C shim; calls view_init_from_xdg_surface(server, xdg_surface)."
+    },
+    {
+      "function": "on_output_frame",
+      "description": "Odin callback invoked by C shim; calls output_handle_frame(server, output)."
+    }
+  ],
+  "shim_api_minimal": [
+    {
+      "function": "shim_register_new_output_listener",
+      "signature": "void shim_register_new_output_listener(struct wlr_backend *backend, void *userdata, void (*cb)(void *userdata, struct wlr_output *output));",
+      "description": "Registers backend->events.new_output and forwards output pointer to cb."
+    },
+    {
+      "function": "shim_register_new_xdg_surface_listener",
+      "signature": "void shim_register_new_xdg_surface_listener(struct wlr_xdg_shell *xdg_shell, void *userdata, void (*cb)(void *userdata, struct wlr_xdg_surface *surface));",
+      "description": "Registers xdg_shell->events.new_surface and forwards surface pointer to cb."
+    },
+    {
+      "function": "shim_register_output_frame_listener",
+      "signature": "void shim_register_output_frame_listener(struct wlr_output *output, void *userdata, void (*cb)(void *userdata, struct wlr_output *output));",
+      "description": "Registers output->events.frame and forwards output pointer to cb."
+    }
+  ]
+}
