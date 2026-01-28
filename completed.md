@@ -16,3 +16,5 @@ Implemented step 18: added `wl_display_run` binding and `server_run`.
 Implemented step 13: added `output_init` to configure outputs, add to layout/scene, and register frame listener.
 Implemented step 15: added `output_handle_frame` render loop using `wlr_output_attach_render`, renderer begin/clear, and `wlr_scene_render_output`.
 Implemented step 16: added `view_init_from_xdg_surface` to create scene xdg surfaces and position them at (0,0).
+Added a `main` entry point to initialize the server, register listeners, start the backend, and run the display loop.
+Added `build.sh` to compile `shim.c` and link it with an Odin build using pkg-config flags.

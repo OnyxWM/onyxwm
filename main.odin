@@ -18,7 +18,6 @@ wlr_output_mode :: struct {}
 wlr_output_layout_output :: struct {}
 wlr_scene_output :: struct {}
 wlr_scene_tree :: struct {}
-wlr_scene_node :: struct {}
 wlr_scene_xdg_surface :: struct {}
 wlr_xdg_toplevel :: struct {}
 
@@ -60,7 +59,6 @@ foreign wlroots {
 	wlr_scene_render_output :: proc(scene: ^wlr_scene, output: ^wlr_output, now: ^timespec) ---
 	wlr_scene_get_root :: proc(scene: ^wlr_scene) -> ^wlr_scene_tree ---
 	wlr_scene_xdg_surface_create :: proc(parent: ^wlr_scene_tree, surface: ^wlr_xdg_surface) -> ^wlr_scene_xdg_surface ---
-	wlr_scene_node_set_position :: proc(node: ^wlr_scene_node, x: int, y: int) ---
 	wlr_xdg_surface_get_toplevel :: proc(surface: ^wlr_xdg_surface) -> ^wlr_xdg_toplevel ---
 }
 
@@ -222,4 +220,37 @@ on_new_xdg_surface :: proc "c" (userdata: rawptr, surface: ^wlr_xdg_surface) {
 on_output_frame :: proc "c" (userdata: rawptr, output: ^wlr_output) {
 	server := cast(^Server)userdata
 	output_handle_frame(server, output)
+}
+
+main :: proc() {
+	display := server_create_display()
+	backend := server_create_backend(display)
+	renderer := server_create_renderer(backend)
+	allocator := server_create_allocator(backend, renderer)
+	_ = server_create_core_globals(display, renderer)
+	output_layout := server_create_output_layout()
+	scene := server_create_scene()
+	scene_output_layout := server_attach_scene_to_layout(scene, output_layout)
+	xdg_shell := server_create_xdg_shell(display)
+	seat := server_create_seat(display, cstring("seat0"))
+
+	server := Server{
+		display = display,
+		backend = backend,
+		renderer = renderer,
+		allocator = allocator,
+		output_layout = output_layout,
+		scene = scene,
+		scene_output_layout = scene_output_layout,
+		xdg_shell = xdg_shell,
+		seat = seat,
+	}
+
+	shim_register_new_output_listener(backend, &server, on_new_output)
+	shim_register_new_xdg_surface_listener(xdg_shell, &server, on_new_xdg_surface)
+
+	if !server_start_backend(backend) {
+		return
+	}
+	server_run(display)
 }
