@@ -276,9 +276,6 @@ main :: proc() {
 	if renderer == nil {
 		return
 	}
-	if !shim_renderer_init_wl_display(renderer, display) {
-		return
-	}
 	allocator := server_create_allocator(backend, renderer)
 	if allocator == nil {
 		return
@@ -306,6 +303,9 @@ main :: proc() {
 	shim_register_new_xdg_surface_listener(xdg_shell, &server, on_new_xdg_surface)
 
 	if !server_start_backend(backend) {
+		return
+	}
+	if !shim_renderer_init_wl_display(renderer, display) {
 		return
 	}
 	server_run(display)
