@@ -2,7 +2,7 @@
 #define SCUMWM_SHIM_H
 
 #ifndef WLR_USE_UNSTABLE
-#define WLR_USE_UNSTABLE
+#define WLR_USE_UNSTABLE 1
 #endif
 
 #include <stdbool.h>
@@ -13,6 +13,7 @@
 #include <wlr/types/wlr_output.h>
 #include <wlr/types/wlr_xdg_shell.h>
 #include <wlr/types/wlr_scene.h>
+#include <wlr/render/wlr_renderer.h>
 
 void shim_register_new_output_listener(struct wlr_backend *backend, void *userdata,
 		void (*cb)(void *userdata, struct wlr_output *output));
