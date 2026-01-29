@@ -45,21 +45,11 @@ foreign wlroots {
 	wlr_xdg_shell_create :: proc(display: ^wl_display) -> ^wlr_xdg_shell ---
 	wlr_seat_create :: proc(display: ^wl_display, name: cstring) -> ^wlr_seat ---
 	wlr_backend_start :: proc(backend: ^wlr_backend) -> bool ---
-	wlr_output_preferred_mode :: proc(output: ^wlr_output) -> ^wlr_output_mode ---
-	wlr_output_set_mode :: proc(output: ^wlr_output, mode: ^wlr_output_mode) ---
-	wlr_output_enable :: proc(output: ^wlr_output, enable: bool) ---
-	wlr_output_commit :: proc(output: ^wlr_output) -> bool ---
-	wlr_output_layout_add_auto :: proc(layout: ^wlr_output_layout, output: ^wlr_output) -> ^wlr_output_layout_output ---
-	wlr_scene_output_create :: proc(scene: ^wlr_scene, output: ^wlr_output) -> ^wlr_scene_output ---
-	wlr_scene_output_layout_add_output :: proc(scene_layout: ^wlr_scene_output_layout, layout_output: ^wlr_output_layout_output, scene_output: ^wlr_scene_output) ---
-	wlr_output_attach_render :: proc(output: ^wlr_output, buffer_age: ^int) -> bool ---
-	wlr_output_effective_resolution :: proc(output: ^wlr_output, width: ^int, height: ^int) ---
-	wlr_renderer_begin :: proc(renderer: ^wlr_renderer, width: int, height: int) ---
-	wlr_renderer_end :: proc(renderer: ^wlr_renderer) ---
-	wlr_renderer_clear :: proc(renderer: ^wlr_renderer, color: ^[4]f32) ---
-	wlr_scene_render_output :: proc(scene: ^wlr_scene, output: ^wlr_output, now: ^timespec) ---
-	wlr_scene_get_root :: proc(scene: ^wlr_scene) -> ^wlr_scene_tree ---
-	wlr_xdg_surface_get_toplevel :: proc(surface: ^wlr_xdg_surface) -> ^wlr_xdg_toplevel ---
+	 wlr_output_preferred_mode :: proc(output: ^wlr_output) -> ^wlr_output_mode ---
+	 wlr_output_layout_add_auto :: proc(layout: ^wlr_output_layout, output: ^wlr_output) -> ^wlr_output_layout_output ---
+	 wlr_scene_output_create :: proc(scene: ^wlr_scene, output: ^wlr_output) -> ^wlr_scene_output ---
+	 wlr_scene_output_layout_add_output :: proc(scene_layout: ^wlr_scene_output_layout, layout_output: ^wlr_output_layout_output, scene_output: ^wlr_scene_output) ---
+	 wlr_output_effective_resolution :: proc(output: ^wlr_output, width: ^int, height: ^int) ---
 }
 
 NewOutputCallback :: proc "c" (userdata: rawptr, output: ^wlr_output)
@@ -70,12 +60,22 @@ foreign shim {
 	shim_register_new_output_listener :: proc(backend: ^wlr_backend, userdata: rawptr, cb: NewOutputCallback) ---
 	shim_register_new_xdg_surface_listener :: proc(xdg_shell: ^wlr_xdg_shell, userdata: rawptr, cb: NewXdgSurfaceCallback) ---
 	shim_register_output_frame_listener :: proc(output: ^wlr_output, userdata: rawptr, cb: OutputFrameCallback) ---
-	shim_scene_xdg_surface_create_node :: proc(
+	 shim_scene_xdg_surface_create_node :: proc(
     parent: ^wlr_scene_tree,
     surface: ^wlr_xdg_surface,
 ) -> ^wlr_scene_node ---
 
-shim_scene_node_set_position :: proc(node: ^wlr_scene_node, x: int, y: int) ---
+	 shim_scene_node_set_position :: proc(node: ^wlr_scene_node, x: int, y: int) ---
+	 shim_output_set_mode :: proc(output: ^wlr_output, mode: ^wlr_output_mode) ---
+	 shim_output_enable :: proc(output: ^wlr_output, enable: bool) ---
+	 shim_output_commit :: proc(output: ^wlr_output) -> bool ---
+	 shim_output_attach_render :: proc(output: ^wlr_output, buffer_age: ^int) -> bool ---
+	 shim_renderer_begin :: proc(renderer: ^wlr_renderer, width: int, height: int) ---
+	 shim_renderer_end :: proc(renderer: ^wlr_renderer) ---
+	 shim_renderer_clear :: proc(renderer: ^wlr_renderer, color: ^[4]f32) ---
+	 shim_scene_render_output :: proc(scene: ^wlr_scene, output: ^wlr_output, now: ^timespec) ---
+	 shim_scene_get_root :: proc(scene: ^wlr_scene) -> ^wlr_scene_tree ---
+	 shim_xdg_surface_get_toplevel :: proc(surface: ^wlr_xdg_surface) -> ^wlr_xdg_toplevel ---
 }
 
 timespec :: struct {
@@ -162,10 +162,10 @@ server_run :: proc(display: ^wl_display) {
 output_init :: proc(server: ^Server, output: ^wlr_output) {
 	mode := wlr_output_preferred_mode(output)
 	if mode != nil {
-		wlr_output_set_mode(output, mode)
+		shim_output_set_mode(output, mode)
 	}
-	wlr_output_enable(output, true)
-	_ = wlr_output_commit(output)
+	shim_output_enable(output, true)
+	_ = shim_output_commit(output)
 
 	layout_output := wlr_output_layout_add_auto(server.output_layout, output)
 	scene_output := wlr_scene_output_create(server.scene, output)
@@ -181,26 +181,26 @@ _, _ = runtime.append_elem(&server.outputs, OutputState{
 
 output_handle_frame :: proc(server: ^Server, output: ^wlr_output) {
 	buffer_age: int
-	if !wlr_output_attach_render(output, &buffer_age) {
+	if !shim_output_attach_render(output, &buffer_age) {
 		return
 	}
 	width: int
 	height: int
 	wlr_output_effective_resolution(output, &width, &height)
 
-	wlr_renderer_begin(server.renderer, width, height)
+	shim_renderer_begin(server.renderer, width, height)
 	clear_color := [4]f32{0.1, 0.1, 0.1, 1.0}
-	wlr_renderer_clear(server.renderer, &clear_color)
-	wlr_scene_render_output(server.scene, output, nil)
-	wlr_renderer_end(server.renderer)
-	_ = wlr_output_commit(output)
+	shim_renderer_clear(server.renderer, &clear_color)
+	shim_scene_render_output(server.scene, output, nil)
+	shim_renderer_end(server.renderer)
+	_ = shim_output_commit(output)
 }
 
 view_init_from_xdg_surface :: proc(server: ^Server, xdg_surface: ^wlr_xdg_surface) {
-    if wlr_xdg_surface_get_toplevel(xdg_surface) == nil {
+    if shim_xdg_surface_get_toplevel(xdg_surface) == nil {
         return
     }
-    root := wlr_scene_get_root(server.scene)
+	root := shim_scene_get_root(server.scene)
     if root == nil {
         return
     }
