@@ -27,6 +27,7 @@ wlr_session :: struct {}
 foreign import wayland "system:wayland-server"
 foreign import wlroots "system:c"
 foreign import shim "system:c"
+foreign import libc "system:c"
 
 foreign wayland {
 	wl_display_create  :: proc() -> ^wl_display ---
@@ -56,6 +57,12 @@ foreign wlroots {
 	 wlr_scene_output_create :: proc(scene: ^wlr_scene, output: ^wlr_output) -> ^wlr_scene_output ---
 	 wlr_scene_output_layout_add_output :: proc(scene_layout: ^wlr_scene_output_layout, layout_output: ^wlr_output_layout_output, scene_output: ^wlr_scene_output) ---
 	 wlr_output_effective_resolution :: proc(output: ^wlr_output, width: ^int, height: ^int) ---
+}
+
+foreign libc {
+	getenv :: proc(name: cstring) -> cstring ---
+	setenv :: proc(name: cstring, value: cstring, overwrite: int) -> int ---
+	strcmp :: proc(a: cstring, b: cstring) -> int ---
 }
 
 NewOutputCallback :: proc "c" (userdata: rawptr, output: ^wlr_output)
@@ -164,6 +171,28 @@ server_run :: proc(display: ^wl_display) {
 	wl_display_run(display)
 }
 
+server_configure_nested_env :: proc() {
+	wayland_display := getenv(cstring("WAYLAND_DISPLAY"))
+	session_type := getenv(cstring("XDG_SESSION_TYPE"))
+	is_wayland := false
+	if wayland_display != nil {
+		is_wayland = true
+	} else if session_type != nil && strcmp(session_type, cstring("wayland")) == 0 {
+		is_wayland = true
+	}
+
+	if !is_wayland {
+		return
+	}
+
+	if getenv(cstring("WLR_BACKENDS")) == nil {
+		_ = setenv(cstring("WLR_BACKENDS"), cstring("wayland"), 0)
+	}
+	if getenv(cstring("WLR_RENDERER")) == nil {
+		_ = setenv(cstring("WLR_RENDERER"), cstring("pixman"), 0)
+	}
+}
+
 output_init :: proc(server: ^Server, output: ^wlr_output) {
 	mode := wlr_output_preferred_mode(output)
 	_ = shim_output_configure(output, mode, true)
@@ -233,6 +262,7 @@ on_output_frame :: proc "c" (userdata: rawptr, output: ^wlr_output) {
 }
 
 main :: proc() {
+	server_configure_nested_env()
 	socket_name := cstring("onyxwm")
 	display := server_create_display()
 	backend := server_create_backend(display)
