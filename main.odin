@@ -224,8 +224,17 @@ on_output_frame :: proc "c" (userdata: rawptr, output: ^wlr_output) {
 main :: proc() {
 	display := server_create_display()
 	backend := server_create_backend(display)
+	if backend == nil {
+		return
+	}
 	renderer := server_create_renderer(backend)
+	if renderer == nil {
+		return
+	}
 	allocator := server_create_allocator(backend, renderer)
+	if allocator == nil {
+		return
+	}
 	_ = server_create_core_globals(display, renderer)
 	output_layout := server_create_output_layout()
 	scene := server_create_scene()
