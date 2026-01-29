@@ -46,8 +46,8 @@ foreign wlroots {
 	wlr_data_device_manager_create :: proc(display: ^wl_display) -> ^wlr_data_device_manager ---
 	wlr_output_layout_create :: proc(display: ^wl_display) -> ^wlr_output_layout ---
 	wlr_scene_create :: proc() -> ^wlr_scene ---
-	wlr_scene_attach_output_layout :: proc(scene: ^wlr_scene, layout: ^wlr_output_layout) -> ^wlr_scene_output_layout ---
-	wlr_xdg_shell_create :: proc(display: ^wl_display) -> ^wlr_xdg_shell ---
+	 wlr_scene_attach_output_layout :: proc(scene: ^wlr_scene, layout: ^wlr_output_layout) -> ^wlr_scene_output_layout ---
+	 wlr_xdg_shell_create :: proc(display: ^wl_display, version: u32) -> ^wlr_xdg_shell ---
 	wlr_seat_create :: proc(display: ^wl_display, name: cstring) -> ^wlr_seat ---
 	wlr_backend_start :: proc(backend: ^wlr_backend) -> bool ---
 	 wlr_output_preferred_mode :: proc(output: ^wlr_output) -> ^wlr_output_mode ---
@@ -72,6 +72,7 @@ foreign shim {
 
 	 shim_scene_node_set_position :: proc(node: ^wlr_scene_node, x: int, y: int) ---
 	 shim_compositor_create :: proc(display: ^wl_display, renderer: ^wlr_renderer) -> ^wlr_compositor ---
+	 shim_xdg_shell_create :: proc(display: ^wl_display) -> ^wlr_xdg_shell ---
 	 shim_output_configure :: proc(output: ^wlr_output, mode: ^wlr_output_mode, enable: bool) -> bool ---
 	 shim_scene_output_commit :: proc(scene_output: ^wlr_scene_output) -> bool ---
 	 shim_scene_get_root :: proc(scene: ^wlr_scene) -> ^wlr_scene_tree ---
@@ -146,7 +147,7 @@ server_attach_scene_to_layout :: proc(scene: ^wlr_scene, layout: ^wlr_output_lay
 }
 
 server_create_xdg_shell :: proc(display: ^wl_display) -> ^wlr_xdg_shell {
-	return wlr_xdg_shell_create(display)
+	return shim_xdg_shell_create(display)
 }
 
 server_create_seat :: proc(display: ^wl_display, name: cstring) -> ^wlr_seat {

@@ -32,6 +32,7 @@ void shim_scene_node_set_position(struct wlr_scene_node *node, int x, int y);
 
 struct wlr_compositor *shim_compositor_create(struct wl_display *display,
 		struct wlr_renderer *renderer);
+struct wlr_xdg_shell *shim_xdg_shell_create(struct wl_display *display);
 bool shim_output_configure(struct wlr_output *output, struct wlr_output_mode *mode,
 		bool enable);
 bool shim_scene_output_commit(struct wlr_scene_output *scene_output);

@@ -104,6 +104,13 @@ struct wlr_compositor *shim_compositor_create(struct wl_display *display,
 	return wlr_compositor_create(display, 1, renderer);
 }
 
+struct wlr_xdg_shell *shim_xdg_shell_create(struct wl_display *display) {
+	if (display == NULL) {
+		return NULL;
+	}
+	return wlr_xdg_shell_create(display, 1);
+}
+
 bool shim_output_configure(struct wlr_output *output, struct wlr_output_mode *mode,
 		bool enable) {
 	if (output == NULL) {
