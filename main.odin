@@ -71,6 +71,7 @@ foreign shim {
 ) -> ^wlr_scene_node ---
 
 	 shim_scene_node_set_position :: proc(node: ^wlr_scene_node, x: int, y: int) ---
+	 shim_compositor_create :: proc(display: ^wl_display, renderer: ^wlr_renderer) -> ^wlr_compositor ---
 	 shim_output_configure :: proc(output: ^wlr_output, mode: ^wlr_output_mode, enable: bool) -> bool ---
 	 shim_scene_output_commit :: proc(scene_output: ^wlr_scene_output) -> bool ---
 	 shim_scene_get_root :: proc(scene: ^wlr_scene) -> ^wlr_scene_tree ---
@@ -126,7 +127,7 @@ CoreGlobals :: struct {
 
 server_create_core_globals :: proc(display: ^wl_display, renderer: ^wlr_renderer) -> CoreGlobals {
 	return CoreGlobals{
-		compositor = wlr_compositor_create(display, u32(4), renderer),
+		compositor = shim_compositor_create(display, renderer),
 		subcompositor = wlr_subcompositor_create(display),
 		data_device_manager = wlr_data_device_manager_create(display),
 	}

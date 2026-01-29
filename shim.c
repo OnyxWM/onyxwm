@@ -96,6 +96,14 @@ void shim_scene_node_set_position(struct wlr_scene_node *node, int x, int y) {
 	wlr_scene_node_set_position(node, x, y);
 }
 
+struct wlr_compositor *shim_compositor_create(struct wl_display *display,
+		struct wlr_renderer *renderer) {
+	if (display == NULL) {
+		return NULL;
+	}
+	return wlr_compositor_create(display, 1, renderer);
+}
+
 bool shim_output_configure(struct wlr_output *output, struct wlr_output_mode *mode,
 		bool enable) {
 	if (output == NULL) {
