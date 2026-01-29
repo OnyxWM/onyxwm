@@ -188,9 +188,6 @@ server_configure_nested_env :: proc() {
 	if getenv(cstring("WLR_BACKENDS")) == nil {
 		_ = setenv(cstring("WLR_BACKENDS"), cstring("wayland"), 0)
 	}
-	if getenv(cstring("WLR_RENDERER")) == nil {
-		_ = setenv(cstring("WLR_RENDERER"), cstring("pixman"), 0)
-	}
 }
 
 output_init :: proc(server: ^Server, output: ^wlr_output) {
