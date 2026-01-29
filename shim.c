@@ -101,7 +101,7 @@ struct wlr_compositor *shim_compositor_create(struct wl_display *display,
 	if (display == NULL) {
 		return NULL;
 	}
-	return wlr_compositor_create(display, 1, renderer);
+	return wlr_compositor_create(display, 4, renderer);
 }
 
 struct wlr_xdg_shell *shim_xdg_shell_create(struct wl_display *display) {
