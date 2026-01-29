@@ -44,7 +44,7 @@ foreign wlroots {
 	wlr_compositor_create :: proc(display: ^wl_display, version: u32, renderer: ^wlr_renderer) -> ^wlr_compositor ---
 	wlr_subcompositor_create :: proc(display: ^wl_display) -> ^wlr_subcompositor ---
 	wlr_data_device_manager_create :: proc(display: ^wl_display) -> ^wlr_data_device_manager ---
-	wlr_output_layout_create :: proc() -> ^wlr_output_layout ---
+	wlr_output_layout_create :: proc(display: ^wl_display) -> ^wlr_output_layout ---
 	wlr_scene_create :: proc() -> ^wlr_scene ---
 	wlr_scene_attach_output_layout :: proc(scene: ^wlr_scene, layout: ^wlr_output_layout) -> ^wlr_scene_output_layout ---
 	wlr_xdg_shell_create :: proc(display: ^wl_display) -> ^wlr_xdg_shell ---
@@ -133,8 +133,8 @@ server_create_core_globals :: proc(display: ^wl_display, renderer: ^wlr_renderer
 	}
 }
 
-server_create_output_layout :: proc() -> ^wlr_output_layout {
-	return wlr_output_layout_create()
+server_create_output_layout :: proc(display: ^wl_display) -> ^wlr_output_layout {
+	return wlr_output_layout_create(display)
 }
 
 server_create_scene :: proc() -> ^wlr_scene {
@@ -250,7 +250,7 @@ main :: proc() {
 		return
 	}
 	_ = server_create_core_globals(display, renderer)
-	output_layout := server_create_output_layout()
+	output_layout := server_create_output_layout(display)
 	scene := server_create_scene()
 	scene_output_layout := server_attach_scene_to_layout(scene, output_layout)
 	xdg_shell := server_create_xdg_shell(display)
