@@ -33,6 +33,7 @@ foreign wayland {
 	wl_display_destroy :: proc(display: ^wl_display) ---
 	wl_display_run     :: proc(display: ^wl_display) ---
 	wl_display_get_event_loop :: proc(display: ^wl_display) -> ^wl_event_loop ---
+	wl_display_add_socket :: proc(display: ^wl_display, name: cstring) -> int ---
 	wl_display_add_socket_auto :: proc(display: ^wl_display) -> cstring ---
 	wl_display_init_shm :: proc(display: ^wl_display) -> int ---
 }
@@ -231,12 +232,13 @@ on_output_frame :: proc "c" (userdata: rawptr, output: ^wlr_output) {
 }
 
 main :: proc() {
+	socket_name := cstring("onyxwm")
 	display := server_create_display()
 	backend := server_create_backend(display)
 	if backend == nil {
 		return
 	}
-	if wl_display_add_socket_auto(display) == nil {
+	if wl_display_add_socket(display, socket_name) != 0 {
 		return
 	}
 	if wl_display_init_shm(display) != 0 {
