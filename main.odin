@@ -2,6 +2,7 @@ package main
 import "base:runtime"
 
 wl_display :: struct {}
+wl_event_loop :: struct {}
 wlr_backend :: struct {}
 wlr_renderer :: struct {}
 wlr_allocator :: struct {}
@@ -21,6 +22,7 @@ wlr_scene_output :: struct {}
 wlr_scene_tree :: struct {}
 wlr_xdg_toplevel :: struct {}
 wlr_scene_node :: struct {}
+wlr_session :: struct {}
 
 foreign import wayland "system:wayland-server"
 foreign import wlroots "system:c"
@@ -30,12 +32,13 @@ foreign wayland {
 	wl_display_create  :: proc() -> ^wl_display ---
 	wl_display_destroy :: proc(display: ^wl_display) ---
 	wl_display_run     :: proc(display: ^wl_display) ---
+	wl_display_get_event_loop :: proc(display: ^wl_display) -> ^wl_event_loop ---
 	wl_display_add_socket_auto :: proc(display: ^wl_display) -> cstring ---
 	wl_display_init_shm :: proc(display: ^wl_display) -> int ---
 }
 
 foreign wlroots {
-	wlr_backend_autocreate :: proc(display: ^wl_display) -> ^wlr_backend ---
+	wlr_backend_autocreate :: proc(loop: ^wl_event_loop, session_ptr: ^^wlr_session) -> ^wlr_backend ---
 	wlr_renderer_autocreate :: proc(backend: ^wlr_backend) -> ^wlr_renderer ---
 	wlr_allocator_autocreate :: proc(backend: ^wlr_backend, renderer: ^wlr_renderer) -> ^wlr_allocator ---
 	wlr_compositor_create :: proc(display: ^wl_display, renderer: ^wlr_renderer) -> ^wlr_compositor ---
@@ -102,7 +105,9 @@ server_create_display :: proc() -> ^wl_display {
 }
 
 server_create_backend :: proc(display: ^wl_display) -> ^wlr_backend {
-	return wlr_backend_autocreate(display)
+	loop := wl_display_get_event_loop(display)
+	session: ^wlr_session = nil
+	return wlr_backend_autocreate(loop, &session)
 }
 
 server_create_renderer :: proc(backend: ^wlr_backend) -> ^wlr_renderer {
