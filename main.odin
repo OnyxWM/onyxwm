@@ -30,6 +30,8 @@ foreign wayland {
 	wl_display_create  :: proc() -> ^wl_display ---
 	wl_display_destroy :: proc(display: ^wl_display) ---
 	wl_display_run     :: proc(display: ^wl_display) ---
+	wl_display_add_socket_auto :: proc(display: ^wl_display) -> cstring ---
+	wl_display_init_shm :: proc(display: ^wl_display) -> int ---
 }
 
 foreign wlroots {
@@ -225,6 +227,12 @@ main :: proc() {
 	display := server_create_display()
 	backend := server_create_backend(display)
 	if backend == nil {
+		return
+	}
+	if wl_display_add_socket_auto(display) == nil {
+		return
+	}
+	if wl_display_init_shm(display) != 0 {
 		return
 	}
 	renderer := server_create_renderer(backend)
