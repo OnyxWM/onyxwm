@@ -96,61 +96,29 @@ void shim_scene_node_set_position(struct wlr_scene_node *node, int x, int y) {
 	wlr_scene_node_set_position(node, x, y);
 }
 
-void shim_output_set_mode(struct wlr_output *output, struct wlr_output_mode *mode) {
-	if (output == NULL || mode == NULL) {
-		return;
-	}
-	wlr_output_set_mode(output, mode);
-}
-
-void shim_output_enable(struct wlr_output *output, bool enable) {
-	if (output == NULL) {
-		return;
-	}
-	wlr_output_enable(output, enable);
-}
-
-bool shim_output_commit(struct wlr_output *output) {
+bool shim_output_configure(struct wlr_output *output, struct wlr_output_mode *mode,
+		bool enable) {
 	if (output == NULL) {
 		return false;
 	}
-	return wlr_output_commit(output);
+
+	struct wlr_output_state state;
+	wlr_output_state_init(&state);
+	wlr_output_state_set_enabled(&state, enable);
+	if (mode != NULL) {
+		wlr_output_state_set_mode(&state, mode);
+	}
+	bool ok = wlr_output_commit_state(output, &state);
+	wlr_output_state_finish(&state);
+	return ok;
 }
 
-bool shim_output_attach_render(struct wlr_output *output, int *buffer_age) {
-	if (output == NULL) {
+bool shim_scene_output_commit(struct wlr_scene_output *scene_output) {
+	if (scene_output == NULL) {
 		return false;
 	}
-	return wlr_output_attach_render(output, buffer_age);
-}
-
-void shim_renderer_begin(struct wlr_renderer *renderer, int width, int height) {
-	if (renderer == NULL) {
-		return;
-	}
-	wlr_renderer_begin(renderer, width, height);
-}
-
-void shim_renderer_end(struct wlr_renderer *renderer) {
-	if (renderer == NULL) {
-		return;
-	}
-	wlr_renderer_end(renderer);
-}
-
-void shim_renderer_clear(struct wlr_renderer *renderer, const float color[4]) {
-	if (renderer == NULL || color == NULL) {
-		return;
-	}
-	wlr_renderer_clear(renderer, color);
-}
-
-void shim_scene_render_output(struct wlr_scene *scene, struct wlr_output *output,
-		const struct timespec *now) {
-	if (scene == NULL || output == NULL) {
-		return;
-	}
-	wlr_scene_render_output(scene, output, now);
+	struct wlr_scene_output_state_options options = {0};
+	return wlr_scene_output_commit(scene_output, &options);
 }
 
 struct wlr_scene_tree *shim_scene_get_root(struct wlr_scene *scene) {
@@ -160,9 +128,9 @@ struct wlr_scene_tree *shim_scene_get_root(struct wlr_scene *scene) {
 	return wlr_scene_get_root(scene);
 }
 
-struct wlr_xdg_toplevel *shim_xdg_surface_get_toplevel(struct wlr_xdg_surface *surface) {
+bool shim_xdg_surface_is_toplevel(struct wlr_xdg_surface *surface) {
 	if (surface == NULL) {
-		return NULL;
+		return false;
 	}
-	return wlr_xdg_surface_get_toplevel(surface);
+	return surface->role == WLR_XDG_SURFACE_ROLE_TOPLEVEL;
 }
