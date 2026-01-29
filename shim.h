@@ -14,6 +14,7 @@
 #include <wlr/types/wlr_output.h>
 #include <wlr/types/wlr_xdg_shell.h>
 #include <wlr/types/wlr_scene.h>
+#include <wlr/render/wlr_renderer.h>
 
 void shim_register_new_output_listener(struct wlr_backend *backend, void *userdata,
 		void (*cb)(void *userdata, struct wlr_output *output));
@@ -32,6 +33,8 @@ void shim_scene_node_set_position(struct wlr_scene_node *node, int x, int y);
 
 struct wlr_compositor *shim_compositor_create(struct wl_display *display,
 		struct wlr_renderer *renderer);
+bool shim_renderer_init_wl_display(struct wlr_renderer *renderer,
+		struct wl_display *display);
 struct wlr_xdg_shell *shim_xdg_shell_create(struct wl_display *display);
 bool shim_output_configure(struct wlr_output *output, struct wlr_output_mode *mode,
 		bool enable);

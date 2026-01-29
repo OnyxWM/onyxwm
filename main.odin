@@ -73,6 +73,7 @@ foreign shim {
 
 	 shim_scene_node_set_position :: proc(node: ^wlr_scene_node, x: int, y: int) ---
 	 shim_compositor_create :: proc(display: ^wl_display, renderer: ^wlr_renderer) -> ^wlr_compositor ---
+	 shim_renderer_init_wl_display :: proc(renderer: ^wlr_renderer, display: ^wl_display) -> bool ---
 	 shim_xdg_shell_create :: proc(display: ^wl_display) -> ^wlr_xdg_shell ---
 	 shim_output_configure :: proc(output: ^wlr_output, mode: ^wlr_output_mode, enable: bool) -> bool ---
 	 shim_scene_output_commit :: proc(scene_output: ^wlr_scene_output) -> bool ---
@@ -246,6 +247,9 @@ main :: proc() {
 	}
 	renderer := server_create_renderer(backend)
 	if renderer == nil {
+		return
+	}
+	if !shim_renderer_init_wl_display(renderer, display) {
 		return
 	}
 	allocator := server_create_allocator(backend, renderer)
