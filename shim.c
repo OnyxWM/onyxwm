@@ -125,7 +125,7 @@ struct wlr_scene_tree *shim_scene_get_root(struct wlr_scene *scene) {
 	if (scene == NULL) {
 		return NULL;
 	}
-	return wlr_scene_get_root(scene);
+	return &scene->tree;
 }
 
 bool shim_xdg_surface_is_toplevel(struct wlr_xdg_surface *surface) {
