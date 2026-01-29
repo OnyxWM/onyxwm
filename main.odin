@@ -1,4 +1,5 @@
 package main
+import "base:runtime"
 
 wl_display :: struct {}
 wlr_backend :: struct {}
@@ -18,12 +19,12 @@ wlr_output_mode :: struct {}
 wlr_output_layout_output :: struct {}
 wlr_scene_output :: struct {}
 wlr_scene_tree :: struct {}
-wlr_scene_xdg_surface :: struct {}
 wlr_xdg_toplevel :: struct {}
+wlr_scene_node :: struct {}
 
 foreign import wayland "system:wayland-server"
-foreign import wlroots "system:wlroots"
-foreign import shim "shim"
+foreign import wlroots "system:c"
+foreign import shim "system:c"
 
 foreign wayland {
 	wl_display_create  :: proc() -> ^wl_display ---
@@ -58,7 +59,6 @@ foreign wlroots {
 	wlr_renderer_clear :: proc(renderer: ^wlr_renderer, color: ^[4]f32) ---
 	wlr_scene_render_output :: proc(scene: ^wlr_scene, output: ^wlr_output, now: ^timespec) ---
 	wlr_scene_get_root :: proc(scene: ^wlr_scene) -> ^wlr_scene_tree ---
-	wlr_scene_xdg_surface_create :: proc(parent: ^wlr_scene_tree, surface: ^wlr_xdg_surface) -> ^wlr_scene_xdg_surface ---
 	wlr_xdg_surface_get_toplevel :: proc(surface: ^wlr_xdg_surface) -> ^wlr_xdg_toplevel ---
 }
 
@@ -70,7 +70,12 @@ foreign shim {
 	shim_register_new_output_listener :: proc(backend: ^wlr_backend, userdata: rawptr, cb: NewOutputCallback) ---
 	shim_register_new_xdg_surface_listener :: proc(xdg_shell: ^wlr_xdg_shell, userdata: rawptr, cb: NewXdgSurfaceCallback) ---
 	shim_register_output_frame_listener :: proc(output: ^wlr_output, userdata: rawptr, cb: OutputFrameCallback) ---
-	shim_scene_xdg_surface_set_position :: proc(scene: ^wlr_scene_xdg_surface, x: int, y: int) ---
+	shim_scene_xdg_surface_create_node :: proc(
+    parent: ^wlr_scene_tree,
+    surface: ^wlr_xdg_surface,
+) -> ^wlr_scene_node ---
+
+shim_scene_node_set_position :: proc(node: ^wlr_scene_node, x: int, y: int) ---
 }
 
 timespec :: struct {
@@ -93,7 +98,7 @@ Server :: struct {
 	scene_output_layout: ^wlr_scene_output_layout,
 	xdg_shell: ^wlr_xdg_shell,
 	seat: ^wlr_seat,
-	outputs: []OutputState,
+	outputs: [dynamic]OutputState,
 }
 
 server_create_display :: proc() -> ^wl_display {
@@ -167,11 +172,10 @@ output_init :: proc(server: ^Server, output: ^wlr_output) {
 	if server.scene_output_layout != nil && layout_output != nil && scene_output != nil {
 		wlr_scene_output_layout_add_output(server.scene_output_layout, layout_output, scene_output)
 	}
-	append(&server.outputs, OutputState{
-		output = output,
-		scene_output = scene_output,
-	})
-
+_, _ = runtime.append_elem(&server.outputs, OutputState{
+    output = output,
+    scene_output = scene_output,
+})
 	shim_register_output_frame_listener(output, server, on_output_frame)
 }
 
@@ -193,33 +197,38 @@ output_handle_frame :: proc(server: ^Server, output: ^wlr_output) {
 }
 
 view_init_from_xdg_surface :: proc(server: ^Server, xdg_surface: ^wlr_xdg_surface) {
-	if wlr_xdg_surface_get_toplevel(xdg_surface) == nil {
-		return
-	}
-	root := wlr_scene_get_root(server.scene)
-	if root == nil {
-		return
-	}
-	scene_xdg := wlr_scene_xdg_surface_create(root, xdg_surface)
-	if scene_xdg == nil {
-		return
-	}
-	shim_scene_xdg_surface_set_position(scene_xdg, 0, 0)
+    if wlr_xdg_surface_get_toplevel(xdg_surface) == nil {
+        return
+    }
+    root := wlr_scene_get_root(server.scene)
+    if root == nil {
+        return
+    }
+
+    node := shim_scene_xdg_surface_create_node(root, xdg_surface)
+    if node == nil {
+        return
+    }
+
+    shim_scene_node_set_position(node, 0, 0)
 }
 
 on_new_output :: proc "c" (userdata: rawptr, output: ^wlr_output) {
-	server := cast(^Server)userdata
-	output_init(server, output)
+    context = runtime.default_context()
+    server := cast(^Server)userdata
+    output_init(server, output)
 }
 
 on_new_xdg_surface :: proc "c" (userdata: rawptr, surface: ^wlr_xdg_surface) {
-	server := cast(^Server)userdata
-	view_init_from_xdg_surface(server, surface)
+    context = runtime.default_context()
+    server := cast(^Server)userdata
+    view_init_from_xdg_surface(server, surface)
 }
 
 on_output_frame :: proc "c" (userdata: rawptr, output: ^wlr_output) {
-	server := cast(^Server)userdata
-	output_handle_frame(server, output)
+    context = runtime.default_context()
+    server := cast(^Server)userdata
+    output_handle_frame(server, output)
 }
 
 main :: proc() {

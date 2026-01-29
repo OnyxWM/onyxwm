@@ -74,9 +74,24 @@ void shim_register_output_frame_listener(struct wlr_output *output, void *userda
 	wl_signal_add(&output->events.frame, &shim->listener);
 }
 
-void shim_scene_xdg_surface_set_position(struct wlr_scene_xdg_surface *scene, int x, int y) {
-	if (scene == NULL) {
+struct wlr_scene_node *shim_scene_xdg_surface_create_node(
+    struct wlr_scene_tree *parent,
+    struct wlr_xdg_surface *surface) {
+    if (parent == NULL || surface == NULL) {
+        return NULL;
+    }
+
+    struct wlr_scene_tree *tree = wlr_scene_xdg_surface_create(parent, surface);
+    if (tree == NULL) {
+        return NULL;
+    }
+
+    return &tree->node;
+}
+
+void shim_scene_node_set_position(struct wlr_scene_node *node, int x, int y) {
+	if (node == NULL) {
 		return;
 	}
-	wlr_scene_node_set_position(&scene->tree->node, x, y);
+	wlr_scene_node_set_position(node, x, y);
 }
