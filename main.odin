@@ -41,7 +41,7 @@ foreign wlroots {
 	wlr_backend_autocreate :: proc(loop: ^wl_event_loop, session_ptr: ^^wlr_session) -> ^wlr_backend ---
 	wlr_renderer_autocreate :: proc(backend: ^wlr_backend) -> ^wlr_renderer ---
 	wlr_allocator_autocreate :: proc(backend: ^wlr_backend, renderer: ^wlr_renderer) -> ^wlr_allocator ---
-	wlr_compositor_create :: proc(display: ^wl_display, renderer: ^wlr_renderer) -> ^wlr_compositor ---
+	wlr_compositor_create :: proc(display: ^wl_display, version: u32, renderer: ^wlr_renderer) -> ^wlr_compositor ---
 	wlr_subcompositor_create :: proc(display: ^wl_display) -> ^wlr_subcompositor ---
 	wlr_data_device_manager_create :: proc(display: ^wl_display) -> ^wlr_data_device_manager ---
 	wlr_output_layout_create :: proc() -> ^wlr_output_layout ---
@@ -126,7 +126,7 @@ CoreGlobals :: struct {
 
 server_create_core_globals :: proc(display: ^wl_display, renderer: ^wlr_renderer) -> CoreGlobals {
 	return CoreGlobals{
-		compositor = wlr_compositor_create(display, renderer),
+		compositor = wlr_compositor_create(display, u32(4), renderer),
 		subcompositor = wlr_subcompositor_create(display),
 		data_device_manager = wlr_data_device_manager_create(display),
 	}
